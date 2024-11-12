@@ -15,7 +15,6 @@ const indexHtmlFilePath = path.resolve(
   "index.template.html"
 );
 const tempHtmlPath = path.join(os.tmpdir(), `index-temp.html`);
-console.log({ tempHtmlPath });
 
 const newLine = (newText) => {
   return `<p>\n${newText}\n</p>`;
@@ -27,12 +26,13 @@ const initializeDisplayLog = () => {
       console.error(`Error reading file: ${err}`);
       return;
     }
+    // console.log({ tempHtmlPath }, { data });
     fs.writeFileSync(tempHtmlPath, data);
   });
 };
 
 const addLogEntry = (updatedHtml) => {
-  fs.writeFile(tempHtmlPath, updatedHtml, "utf8", (err) => {
+  fs.writeFileSync(tempHtmlPath, updatedHtml, "utf8", (err) => {
     if (err) {
       console.error(`Error writing file: ${err}`);
       return;
@@ -42,14 +42,17 @@ const addLogEntry = (updatedHtml) => {
 };
 
 const updateDisplayLog = (newText) => {
-  fs.readFile(tempHtmlPath, "utf8", (err, data) => {
-    if (err) {
-      console.error(`Error reading file: ${err}`);
-      return;
-    }
-    const updatedHtml = data.replace("<main>", `<main>\n${newLine(newText)}`);
-    addLogEntry(updatedHtml);
-  });
+  const data = fs.readFileSync(tempHtmlPath, "utf8");
+  const updatedHtml = data.replace("<main>", `<main>\n${newLine(newText)}`);
+  addLogEntry(updatedHtml);
+  // fs.readFileSync(tempHtmlPath, "utf8", (err, data) => {
+  //   if (err) {
+  //     console.error(`Error reading file: ${err}`);
+  //     return;
+  //   }
+  //   const updatedHtml = data.replace("<main>", `<main>\n${newLine(newText)}`);
+  //   addLogEntry(updatedHtml);
+  // });
 };
 
 process.on("exit", () => {

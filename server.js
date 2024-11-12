@@ -31,20 +31,31 @@ const server = http.createServer((req, res) => {
       case SET:
         const [[key, value]] = searchParams.entries();
         serverMemory.set(key, value);
+        updateDisplayLog(
+          `${new Date()} -- VALUE [${value}] stored at KEY [${key}]`
+        );
         break;
       case GET:
         const reqKey = searchParams.get("key");
         const resValue = serverMemory.get(reqKey);
         if (resValue === undefined) {
           throw new Error("The requested key was not found.");
+        } else {
+          updateDisplayLog(
+            `${new Date()} -- The requested VALUE stored at KEY [${key}] is [${value}]`
+          );
         }
         break;
       default:
         console.log(`hmm something else ${pathname}`);
     }
-  } catch (error) {}
-  updateDisplayLog("test");
-  res.writeHead(200, { "Content-Type": "text/html" }); //TODO: clean up hardcoded status numbers/headers
+  } catch (error) {
+    updateDisplayLog(`${new Date()} -- Error with request [${pathname}]`);
+  }
+  res.writeHead(200, {
+    "Content-Type": "text/html",
+    "Cache-Control": "no-store",
+  }); //TODO: clean up hardcoded status numbers/headers
   fs.createReadStream(
     path.resolve(__dirname, tempHtmlPath ?? `public/index.template.html`)
   ).pipe(res);
