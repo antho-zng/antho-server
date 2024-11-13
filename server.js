@@ -17,6 +17,26 @@ const serverMemory = new Map();
  */
 initializeDisplayLog();
 
+const handleSetRequest = (searchParams) => {
+  const [[key, value]] = searchParams.entries();
+  serverMemory.set(key, value);
+  updateDisplayLog(
+    `${new Date()} -- SET: VALUE [${value}] stored at KEY [${key}]`
+  );
+};
+
+const handleGetRequest = (searchParams) => {
+  const key = searchParams.get("key");
+  const value = serverMemory.get(key);
+
+  if (value === undefined) {
+    throw new Error("The requested key was not found.");
+  }
+  updateDisplayLog(
+    `${new Date()} -- GET: The requested VALUE stored at KEY [${key}] is [${value}]`
+  );
+};
+
 const server = http.createServer((req, res) => {
   /**
    * We're using a URL constructor here for (1) better readability/maintainability
@@ -29,22 +49,10 @@ const server = http.createServer((req, res) => {
   try {
     switch (pathname) {
       case SET:
-        const [[key, value]] = searchParams.entries();
-        serverMemory.set(key, value);
-        updateDisplayLog(
-          `${new Date()} -- SET: VALUE [${value}] stored at KEY [${key}]`
-        );
+        handleSetRequest(searchParams);
         break;
       case GET:
-        const reqKey = searchParams.get("key");
-        const resValue = serverMemory.get(reqKey);
-        if (resValue === undefined) {
-          throw new Error("The requested key was not found.");
-        } else {
-          updateDisplayLog(
-            `${new Date()} -- GET: The requested VALUE stored at KEY [${reqKey}] is [${resValue}]`
-          );
-        }
+        handleGetRequest(searchParams);
         break;
       default:
         break;
@@ -58,7 +66,7 @@ const server = http.createServer((req, res) => {
     "Content-Type": "text/html",
     "Cache-Control": "no-store",
   });
-  fs.createReadStream(path.resolve(__dirname, TEMP_HTML_PATH)).pipe(res);
+  fs.createReadStream(TEMP_HTML_PATH).pipe(res);
 });
 
 server.listen(PORT, () => {
