@@ -1,11 +1,11 @@
 const http = require("http");
 const path = require("node:path");
 const fs = require("node:fs");
-const { PORT, HOMEPAGE_MESSAGE, REQUEST_ACTIONS } = require("./constants");
+const { PORT, REQUEST_ACTIONS } = require("./constants");
 const {
   initializeDisplayLog,
   updateDisplayLog,
-  tempHtmlPath,
+  TEMP_HTML_PATH,
 } = require("./scripts/updateDisplayLog");
 
 const { SET, GET } = REQUEST_ACTIONS;
@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
         const [[key, value]] = searchParams.entries();
         serverMemory.set(key, value);
         updateDisplayLog(
-          `${new Date()} -- VALUE [${value}] stored at KEY [${key}]`
+          `${new Date()} -- SET: VALUE [${value}] stored at KEY [${key}]`
         );
         break;
       case GET:
@@ -42,23 +42,23 @@ const server = http.createServer((req, res) => {
           throw new Error("The requested key was not found.");
         } else {
           updateDisplayLog(
-            `${new Date()} -- The requested VALUE stored at KEY [${key}] is [${value}]`
+            `${new Date()} -- GET: The requested VALUE stored at KEY [${reqKey}] is [${resValue}]`
           );
         }
         break;
       default:
-        console.log(`hmm something else ${pathname}`);
+        break;
     }
   } catch (error) {
-    updateDisplayLog(`${new Date()} -- Error with request [${pathname}]`);
+    updateDisplayLog(
+      `${new Date()} -- Error with request [${pathname}]. ${error ? error : ""}`
+    );
   }
   res.writeHead(200, {
     "Content-Type": "text/html",
     "Cache-Control": "no-store",
-  }); //TODO: clean up hardcoded status numbers/headers
-  fs.createReadStream(
-    path.resolve(__dirname, tempHtmlPath ?? `public/index.template.html`)
-  ).pipe(res);
+  });
+  fs.createReadStream(path.resolve(__dirname, TEMP_HTML_PATH)).pipe(res);
 });
 
 server.listen(PORT, () => {
