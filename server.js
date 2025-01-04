@@ -6,7 +6,7 @@ const {
   initializeDisplayLog,
   updateDisplayLog,
   TEMP_HTML_PATH,
-} = require("./scripts/updateDisplayLog");
+} = require("./updateDisplayLog");
 
 const { SET, GET } = REQUEST_ACTIONS;
 const serverMemory = new Map();
