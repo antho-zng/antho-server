@@ -11,11 +11,6 @@ A quick demo project for Anthony Zhang's Recurse Center application. A basic ser
 
 ## Getting started
 
-[TODO]
 - Clone this repository.
 - Run `node server.js`.
 - Navigate to `http://localhost:4000/` on your browser.
-
-## Acknowledgements
-
-[TODO]
