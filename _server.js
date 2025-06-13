@@ -12,6 +12,6 @@ const server = net.createServer((c) => {
 server.on("error", (err) => {
   throw err;
 });
-server.listen(8124, () => {
+server.listen(80, () => {
   console.log("server bound");
 });
