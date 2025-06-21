@@ -1,4 +1,5 @@
 const PORT = 4000;
+const ALT_PORT = 80;
 const HOMEPAGE_MESSAGE = "this is antho-server :-) !"; //TODO: messaging that instructs users to make set or get requests
 const REQUEST_ACTIONS = {
   GET: "/get",
@@ -534,4 +535,10 @@ const HTTP_STATUS_CODES = {
   },
 };
 
-module.exports = { PORT, HOMEPAGE_MESSAGE, REQUEST_ACTIONS, HTTP_STATUS_CODES };
+module.exports = {
+  PORT,
+  ALT_PORT,
+  HOMEPAGE_MESSAGE,
+  REQUEST_ACTIONS,
+  HTTP_STATUS_CODES,
+};

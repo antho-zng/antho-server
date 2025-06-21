@@ -6,36 +6,19 @@ const {
   initializeDisplayLog,
   updateDisplayLog,
   TEMP_HTML_PATH,
-} = require("./updateDisplayLog");
+} = require("./services/displayService");
+const {
+  handleGetRequest,
+  handleSetRequest,
+} = require("./services/cacheService");
 
 const { SET, GET } = REQUEST_ACTIONS;
-const serverMemory = new Map();
 
 /**
  * This creates a temporary file that we'll use to log and display server requests.
  * The file will be deleted on exit
  */
 initializeDisplayLog();
-
-const handleSetRequest = (searchParams) => {
-  const [[key, value]] = searchParams.entries();
-  serverMemory.set(key, value);
-  updateDisplayLog(
-    `${new Date()} -- SET: VALUE [${value}] stored at KEY [${key}]`
-  );
-};
-
-const handleGetRequest = (searchParams) => {
-  const key = searchParams.get("key");
-  const value = serverMemory.get(key);
-
-  if (value === undefined) {
-    throw new Error("The requested key was not found.");
-  }
-  updateDisplayLog(
-    `${new Date()} -- GET: The requested VALUE stored at KEY [${key}] is [${value}]`
-  );
-};
 
 const server = http.createServer((req, res) => {
   /**

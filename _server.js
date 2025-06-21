@@ -1,22 +1,101 @@
 const net = require("node:net");
-const { HTTP_STATUS_CODES } = require("./constants");
+const fs = require("node:fs");
+const { ALT_PORT, REQUEST_ACTIONS, HTTP_STATUS_CODES } = require("./constants");
+const {
+  initializeDisplayLog,
+  updateDisplayLog,
+  TEMP_HTML_PATH,
+} = require("./services/displayService");
+const {
+  handleGetRequest,
+  handleSetRequest,
+} = require("./services/cacheService");
+
+const { SET, GET } = REQUEST_ACTIONS;
+
+/**
+ * This creates a temporary file that we'll use to log and display server requests.
+ * The file will be deleted on exit
+ */
+initializeDisplayLog();
+
+const parseReqDataToJSON = (buffer) => {
+  const reqJSON = {};
+  const requestString = buffer?.toString().split("\r\n") || "";
+  const requestLine = requestString[0]; //TODO: refactor to avoid using magic number for indexing
+
+  /**
+   * HTTP conventions specify this format for the request line:
+   * <method> <resource> <version>
+   * So we'll assume incoming client requests will consistently follow this format.
+   */
+  const [reqMethod, reqResource, reqHttpVersion] = requestLine.split(" ");
+
+  Object.assign(reqJSON, {
+    reqMethod: reqMethod,
+    reqResource: reqResource,
+    reqHttpVersion: reqHttpVersion,
+  });
+
+  const requestHeaders = requestString.slice(1);
+  for (line of requestHeaders) {
+    const [key, value] = line.split(":");
+    if (key.length > 1) {
+      reqJSON[key.toLowerCase()] = value.trim();
+    }
+  }
+  return reqJSON;
+};
 
 const server = net.createServer((socket) => {
-  console.log("client connected");
   socket.on("data", (data) => {
-    console.log("data received");
-    const requestString = data?.toString().split("\r\n") || ""; //TODO: refactor to avoid using magic number for indexing
-    const requestLine = requestString[0] || "";
+    const reqJSON = parseReqDataToJSON(data);
+
     /**
-     * HTTP conventions specify this format for the request line:
-     * <method> <resource> <version>
-     * So we'll assume incoming client requests will consistently follow this format.
+     * A `referer` header usually indicates a browser-initiated resource fetch
+     * (e.g. for something like favicon.ico). We don't want to deal with those
+     * on our server.
      */
-    const [reqMethod, reqResource, reqHTTPversion] = requestLine.split(" ");
-    const response = `${reqHTTPversion} ${HTTP_STATUS_CODES[200].code} ${HTTP_STATUS_CODES[200].message}\r\n\r\nRequested path: ${reqResource}\r\n`;
-    console.log(response);
-    socket.write(response);
-    socket.end();
+    if (reqJSON["referer"]) {
+      return;
+    }
+
+    /**
+     * We're using a URL constructor here for (1) better readability/maintainability
+     * (string manipulation methods would be kinda hacky) and (2) ease of accessing
+     * `pathname` and `searchParams`
+     */
+    const reqURL =
+      `http://${reqJSON["host"]}:${ALT_PORT}` + `${reqJSON["reqResource"]}`;
+    const { pathname, searchParams } = new URL(reqURL);
+
+    try {
+      switch (pathname) {
+        case SET:
+          handleSetRequest(searchParams);
+          break;
+        case GET:
+          handleGetRequest(searchParams);
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      updateDisplayLog(
+        `${new Date()} -- Error with request [${pathname}]. ${
+          error ? error : ""
+        }`
+      );
+    }
+    socket.write(
+      `${reqJSON["reqHttpVersion"]} ${HTTP_STATUS_CODES[200].code} ${HTTP_STATUS_CODES[200].message}\r\n`
+    );
+    socket.write("Content-Type: text/html\r\n\r\n");
+    const resBody = fs.createReadStream(TEMP_HTML_PATH);
+    resBody.pipe(socket);
+    resBody.on("end", () => {
+      socket.end();
+    });
   });
   socket.on("end", () => {
     console.log("client disconnected");
@@ -25,6 +104,6 @@ const server = net.createServer((socket) => {
 server.on("error", (err) => {
   throw err;
 });
-server.listen(80, () => {
-  console.log("server bound");
+server.listen(ALT_PORT, () => {
+  console.log(`Server listening on port ${ALT_PORT}`);
 });
