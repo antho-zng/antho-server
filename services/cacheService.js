@@ -13,6 +13,11 @@ const handleGetRequest = (searchParams) => {
   const key = searchParams.get("key");
   const value = serverCache.get(key);
 
+  if (!key) {
+    throw new Error(
+      "Please check your request and ensure it is formatted `http://localhost:4000/get?key=somekey`. `get` requests are only supported for the `key` table."
+    );
+  }
   if (value === undefined) {
     throw new Error("The requested key was not found.");
   }
