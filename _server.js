@@ -20,7 +20,6 @@ const { SET, GET } = REQUEST_ACTIONS;
 initializeDisplayLog();
 
 const parseReqDataToJSON = (buffer) => {
-  const reqJSON = {};
   const requestString = buffer?.toString().split("\r\n") || "";
   const requestLine = requestString[0]; //TODO: refactor to avoid using magic number for indexing
 
@@ -31,20 +30,20 @@ const parseReqDataToJSON = (buffer) => {
    */
   const [reqMethod, reqResource, reqHttpVersion] = requestLine.split(" ");
 
-  Object.assign(reqJSON, {
-    reqMethod: reqMethod,
-    reqResource: reqResource,
-    reqHttpVersion: reqHttpVersion,
-  });
-
   const requestHeaders = requestString.slice(1);
+  const requestHeadersCleaned = {};
   for (line of requestHeaders) {
     const [key, value] = line.split(":");
     if (key.length > 1) {
-      reqJSON[key.toLowerCase()] = value.trim();
+      requestHeadersCleaned[key.toLowerCase()] = value.trim();
     }
   }
-  return reqJSON;
+  return {
+    reqMethod: reqMethod,
+    reqResource: reqResource,
+    reqHttpVersion: reqHttpVersion,
+    ...requestHeadersCleaned,
+  };
 };
 
 const server = net.createServer((socket) => {
@@ -87,6 +86,7 @@ const server = net.createServer((socket) => {
         }`
       );
     }
+
     socket.write(
       `${reqJSON["reqHttpVersion"]} ${HTTP_STATUS_CODES[200].code} ${HTTP_STATUS_CODES[200].message}\r\n`
     );
