@@ -2,7 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const TEMPLATE_PATH = path.resolve(__dirname, "index.template.html");
+const TEMPLATE_PATH = path.resolve(
+  path.dirname(__dirname),
+  "index.template.html"
+);
 const TEMP_HTML_PATH = path.join(os.tmpdir(), `index-temp.html`);
 
 const newLine = (text) => `<p>\n${text}\n</p>`;
